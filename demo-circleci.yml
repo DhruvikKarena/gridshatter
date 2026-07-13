@@ -1,0 +1,42 @@
+# Demo CircleCI Configuration File for Cloud Architecture Simulator
+version: 2.1
+
+orbs:
+  aws-s3: circleci/aws-s3@3.0.0
+  aws-ecs: circleci/aws-ecs@3.2.0
+
+jobs:
+  run-tests:
+    docker:
+      - image: cimg/node:16.14.0
+    steps:
+      - checkout
+      - run: npm install
+      - run: npm test
+
+  build-and-deploy-assets:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+      - run: pip install awscli
+      - run: aws s3 sync ./public s3://app-user-uploads-bucket --delete
+
+  publish-container:
+    docker:
+      - image: cimg/aws:2023.05
+    steps:
+      - checkout
+      - run: docker build -t web-app:latest .
+      - run: aws ecs update-service --cluster app-vpc --service web-service --force-new-deployment
+
+workflows:
+  delivery-pipeline:
+    jobs:
+      - run-tests
+      - build-and-deploy-assets:
+          requires:
+            - run-tests
+      - publish-container:
+          requires:
+            - run-tests

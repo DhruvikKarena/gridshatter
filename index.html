@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloud Architecture Simulator — Visualize CircleCI & Terraform Configs</title>
+  <meta name="description" content="Upload CircleCI or Terraform configuration files and instantly generate interactive cloud architecture diagrams with animated visualization." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles/index.css" />
+  <link rel="stylesheet" href="/src/styles/upload.css" />
+  <link rel="stylesheet" href="/src/styles/diagram.css" />
+  <link rel="stylesheet" href="/src/styles/terminal.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header id="app-header">
+      <div class="header-left">
+        <div class="logo" id="logo">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="url(#logoGrad)"/>
+            <path d="M8 20L16 12L24 20" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 24L16 20L20 24" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
+                <stop stop-color="#06b6d4"/>
+                <stop offset="1" stop-color="#8b5cf6"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <h1>Cloud Architect</h1>
+        </div>
+        <span class="badge">Simulator</span>
+      </div>
+      <div class="header-right">
+        <div class="sample-selector" id="sample-selector"></div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content">
+      <!-- Left Panel: Upload + Terminal -->
+      <aside id="left-panel">
+        <div id="upload-section"></div>
+        <div id="file-preview-section" class="hidden"></div>
+        <div id="terminal-section"></div>
+        <div id="error-section"></div>
+      </aside>
+
+      <!-- Right Panel: Diagram -->
+      <section id="diagram-section">
+        <div id="toolbar-container"></div>
+        <div id="diagram-viewport">
+          <div id="diagram-placeholder">
+            <div class="placeholder-icon">
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="38" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.3"/>
+                <circle cx="20" cy="30" r="6" fill="currentColor" opacity="0.15"/>
+                <circle cx="55" cy="25" r="6" fill="currentColor" opacity="0.15"/>
+                <circle cx="40" cy="55" r="6" fill="currentColor" opacity="0.15"/>
+                <line x1="25" y1="32" x2="50" y2="27" stroke="currentColor" stroke-width="1" opacity="0.1"/>
+                <line x1="23" y1="35" x2="37" y2="50" stroke="currentColor" stroke-width="1" opacity="0.1"/>
+                <line x1="52" y1="30" x2="43" y2="50" stroke="currentColor" stroke-width="1" opacity="0.1"/>
+              </svg>
+            </div>
+            <h2>Upload a Configuration File</h2>
+            <p>Drop a <strong>CircleCI config.yml</strong> or <strong>Terraform .tf</strong> file to generate an interactive architecture diagram</p>
+          </div>
+          <svg id="diagram-svg" class="hidden" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
