@@ -42,10 +42,20 @@
 
     <!-- Main Content -->
     <main id="main-content">
-      <!-- Left Panel: Upload + Terminal -->
+      <!-- Left Panel: Tabs + Content Panels -->
       <aside id="left-panel">
-        <div id="upload-section"></div>
-        <div id="file-preview-section" class="hidden"></div>
+        <div class="panel-tabs">
+          <button class="panel-tab active" id="tab-btn-parser">File Parser</button>
+          <button class="panel-tab" id="tab-btn-game">Practice Arcade</button>
+        </div>
+        
+        <div id="parser-tab-content">
+          <div id="upload-section"></div>
+          <div id="file-preview-section" class="hidden"></div>
+        </div>
+
+        <div id="game-tab-content" class="hidden"></div>
+
         <div id="terminal-section"></div>
         <div id="error-section"></div>
       </aside>

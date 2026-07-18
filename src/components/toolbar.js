@@ -53,6 +53,15 @@ export class Toolbar {
 
         <div class="toolbar-divider"></div>
 
+        <!-- Simulate Threat Button (conditional show if Terraform is active) -->
+        <button class="toolbar-btn" id="btn-simulate-threat" title="Simulate Attack / Threat Model" style="color: var(--accent-rose); display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </button>
+
         <!-- Animation Controls (conditional show if generating) -->
         <div id="anim-controls-wrapper" style="display: ${this.isAnimating ? 'flex' : 'none'}; gap: 2px;">
           <button class="toolbar-btn" id="btn-skip-anim" title="Skip Animation" style="color: var(--accent-amber);">
@@ -105,6 +114,16 @@ export class Toolbar {
     this.container.querySelector('#btn-zoom-fit').addEventListener('click', () => this.actions.zoomFit());
     this.container.querySelector('#btn-zoom-reset').addEventListener('click', () => this.actions.zoomReset());
 
+    // Threat Simulation trigger
+    const threatBtn = this.container.querySelector('#btn-simulate-threat');
+    if (threatBtn) {
+      threatBtn.addEventListener('click', () => {
+        if (this.actions.simulateThreat) {
+          this.actions.simulateThreat();
+        }
+      });
+    }
+
     // Export triggers
     const dropdownBtn = this.container.querySelector('#btn-export-dropdown');
     dropdownBtn.addEventListener('click', (e) => {
@@ -151,6 +170,13 @@ export class Toolbar {
     const wrapper = this.container.querySelector('#anim-controls-wrapper');
     if (wrapper) {
       wrapper.style.display = isAnimating ? 'flex' : 'none';
+    }
+  }
+
+  showThreatButton(visible) {
+    const btn = this.container.querySelector('#btn-simulate-threat');
+    if (btn) {
+      btn.style.display = visible ? 'flex' : 'none';
     }
   }
 }

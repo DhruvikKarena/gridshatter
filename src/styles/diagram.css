@@ -382,3 +382,178 @@
   stroke-width: 1.5;
   marker-end: url(#arrowhead);
 }
+
+/* Attacked / Vulnerable states during simulation */
+.diagram-node.attacked .node-bg {
+  stroke: var(--accent-rose) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.6)) !important;
+}
+
+.diagram-node.attacked .node-glow-bg {
+  opacity: 1 !important;
+  fill: rgba(244, 63, 94, 0.1) !important;
+}
+
+.diagram-edge.attacked {
+  stroke: var(--accent-rose) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.4)) !important;
+  animation: attackPulse 1s ease-in-out infinite;
+}
+
+@keyframes attackPulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+/* Attacker Threat Report Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 6, 12, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  animation: fadeIn var(--duration-normal) var(--ease-out);
+}
+
+.modal-content {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), var(--shadow-glow-rose);
+  animation: scaleUp var(--duration-normal) var(--ease-out);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(244, 63, 94, 0.03);
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--accent-rose);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast);
+  display: flex;
+  align-items: center;
+}
+
+.modal-close-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.modal-body {
+  padding: var(--space-6);
+  overflow-y: auto;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.modal-body h3 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-2);
+  border-left: 3px solid var(--accent-rose);
+  padding-left: var(--space-2);
+}
+
+.modal-body h3:first-of-type {
+  margin-top: 0;
+}
+
+.modal-body p {
+  margin-bottom: var(--space-4);
+}
+
+.modal-body ul {
+  padding-left: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.modal-body li {
+  margin-bottom: var(--space-1);
+}
+
+.modal-body code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--accent-cyan);
+}
+
+.modal-body pre {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  overflow-x: auto;
+  margin-bottom: var(--space-4);
+}
+
+.modal-body pre code {
+  padding: 0;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.modal-footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: flex-end;
+  background: var(--bg-secondary);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
