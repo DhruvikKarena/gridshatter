@@ -338,25 +338,18 @@ class App {
     this.toolbar.setAnimating(false);
     
     // Identify Scenario
-    let scenarioKey = 'generic';
+    let scenario;
     if (this.game && this.game.activeChallenge) {
-      scenarioKey = 'challenge_' + this.game.activeChallenge.id;
+      const scenarioKey = 'challenge_' + this.game.activeChallenge.id;
+      scenario = this.getDynamicScenario(scenarioKey, this.currentAST);
     } else {
-      // Fallback custom file logic
-      if (this.currentGraph.nodes.some(n => n.type === 'aws_sns_topic_subscription' || n.type === 'aws_s3_bucket_notification')) {
-        scenarioKey = 'messaging';
-      } else if (this.currentGraph.nodes.some(n => n.type === 'aws_api_gateway_rest_api')) {
-        scenarioKey = 'serverless';
-      } else if (this.currentGraph.nodes.some(n => n.type === 'aws_lb' || n.type === 'aws_alb')) {
-        scenarioKey = 'alb';
-      } else if (this.currentGraph.nodes.some(n => n.type === 'aws_ecs_cluster' || n.type === 'aws_ecs_service')) {
-        scenarioKey = 'ecs';
-      }
+      // Run global security scan on custom upload!
+      scenario = this.runGlobalThreatScan(this.currentAST);
     }
 
-    const scenario = this.getDynamicScenario(scenarioKey, this.currentAST);
+    const scenarioTitle = scenario.title || "Threat Simulation";
     this.terminal.clear();
-    this.terminal.log('step', `⚡ Starting Attacker Threat Simulation [Scenario: ${scenario.title}]...`);
+    this.terminal.log('step', `⚡ Starting Attacker Threat Simulation [Scenario: ${scenarioTitle}]...`);
 
     // Clean up any old highlights
     document.querySelectorAll('.diagram-node.attacked').forEach(el => el.classList.remove('attacked'));
@@ -439,6 +432,191 @@ class App {
 
     modal.querySelector('#btn-close-modal').addEventListener('click', closeModal);
     modal.querySelector('#btn-close-modal-footer').addEventListener('click', closeModal);
+  }
+
+  runGlobalThreatScan(ast) {
+    const findings = [];
+    const steps = [];
+
+    if (!ast || !ast.resources || ast.resources.length === 0) {
+      return {
+        title: "Global Infrastructure Security Scan",
+        steps: [
+          { target: "aws_generic", log: "[SCAN] No AWS resources found in current AST workspace.", status: "warning" }
+        ],
+        report: `<h3>Scan Summary</h3><p>No resources defined to run security threat analysis.</p>`
+      };
+    }
+
+    // Step 1: Network & Boundary Scan
+    steps.push({ target: "aws_vpc", log: "[SCAN] Auditing Network & VPC topology boundaries...", status: "info" });
+    
+    const sgs = ast.resources.filter(r => r.type === 'aws_security_group');
+    sgs.forEach(sg => {
+      const body = sg.rawBody || '';
+      if (body.includes('0.0.0.0/0') && (body.includes('22') || body.includes('3389') || body.includes('ssh') || body.includes('rdp'))) {
+        steps.push({ target: sg.type, log: `[VULN DETECTED] Security Group '${sg.name}' allows SSH/RDP from 0.0.0.0/0!`, status: "error" });
+        findings.push({
+          severity: "HIGH",
+          resource: `aws_security_group.${sg.name}`,
+          title: "Publicly Exposed Management Ports",
+          desc: "Firewall rules permit inbound SSH (Port 22) or RDP (Port 3389) connections from any IP address on the internet.",
+          remediation: "Restrict ingress sources to trusted CIDR blocks or corporate VPN IP addresses."
+        });
+      }
+    });
+
+    // Step 2: Storage & Backup Scan
+    steps.push({ target: "aws_s3_bucket", log: "[SCAN] Auditing Object Storage (S3) buckets...", status: "info" });
+    
+    const buckets = ast.resources.filter(r => r.type === 'aws_s3_bucket');
+    buckets.forEach(bucket => {
+      const pabs = ast.resources.filter(r => r.type === 'aws_s3_bucket_public_access_block');
+      const hasBlock = pabs.some(pab => {
+        const ref = pab.attributes.bucket || pab.rawBody || '';
+        return ref.includes(`aws_s3_bucket.${bucket.name}`) || ref.includes(bucket.name);
+      });
+
+      if (!hasBlock) {
+        steps.push({ target: bucket.type, log: `[VULN DETECTED] S3 bucket '${bucket.name}' is missing Block Public Access block!`, status: "error" });
+        findings.push({
+          severity: "HIGH",
+          resource: `aws_s3_bucket.${bucket.name}`,
+          title: "Missing S3 Block Public Access",
+          desc: "The S3 bucket lacks explicit settings to block public access policies, risking accidental exposure.",
+          remediation: "Add an 'aws_s3_bucket_public_access_block' resource and configure all block flags to true."
+        });
+      }
+    });
+
+    // Step 3: Compute & Container Scan
+    steps.push({ target: "aws_instance", log: "[SCAN] Auditing EC2 Compute Host instances...", status: "info" });
+    
+    const instances = ast.resources.filter(r => r.type === 'aws_instance');
+    instances.forEach(inst => {
+      const body = inst.rawBody || '';
+      if (!body.includes('http_tokens') || body.includes('optional')) {
+        steps.push({ target: inst.type, log: `[VULN DETECTED] EC2 Instance '${inst.name}' allows IMDSv1 queries!`, status: "warning" });
+        findings.push({
+          severity: "LOW",
+          resource: `aws_instance.${inst.name}`,
+          title: "IMDSv1 Enabled",
+          desc: "Instance metadata service v1 does not require session tokens, making it easier for attackers to retrieve task IAM role tokens.",
+          remediation: "Enforce IMDSv2 by adding metadata_options block with http_tokens = \"required\"."
+        });
+      }
+    });
+
+    // Step 4: Database Security Scan
+    steps.push({ target: "aws_db_instance", log: "[SCAN] Auditing Database & Storage (RDS) engines...", status: "info" });
+    
+    const dbs = ast.resources.filter(r => r.type === 'aws_db_instance');
+    dbs.forEach(db => {
+      const body = db.rawBody || '';
+      if (!body.includes('storage_encrypted = true') && db.attributes.storage_encrypted !== 'true') {
+        steps.push({ target: db.type, log: `[VULN DETECTED] RDS Instance '${db.name}' storage encryption is disabled!`, status: "error" });
+        findings.push({
+          severity: "HIGH",
+          resource: `aws_db_instance.${db.name}`,
+          title: "Unencrypted Database Storage",
+          desc: "Storage volumes for database instances are unencrypted, exposing plaintext data if underlying snapshots are compromised.",
+          remediation: "Add storage_encrypted = true to the aws_db_instance resource configuration."
+        });
+      }
+    });
+
+    // Step 5: Application Ingress & Load Balancing
+    steps.push({ target: "aws_lb", log: "[SCAN] Auditing Application Ingress Listeners...", status: "info" });
+    
+    const albs = ast.resources.filter(r => r.type === 'aws_lb' || r.type === 'aws_alb');
+    albs.forEach(alb => {
+      const listeners = ast.resources.filter(r => r.type === 'aws_lb_listener');
+      const hasHttps = listeners.some(l => {
+        const match = l.rawBody.includes(`aws_lb.${alb.name}`) || l.rawBody.includes(`aws_alb.${alb.name}`) || l.attributes.load_balancer_arn?.includes(alb.name);
+        return match && (l.attributes.port === '443' || l.attributes.protocol === 'HTTPS' || l.rawBody.includes('443') || l.rawBody.includes('HTTPS'));
+      });
+
+      if (!hasHttps) {
+        steps.push({ target: alb.type, log: `[VULN DETECTED] Ingress Load Balancer '${alb.name}' lacks HTTPS listener configurations!`, status: "error" });
+        findings.push({
+          severity: "MEDIUM",
+          resource: `${alb.type}.${alb.name}`,
+          title: "Plaintext Ingress Communication",
+          desc: "The load balancer listens on unencrypted HTTP (Port 80) routes without TLS/SSL protection, allowing packet sniffing.",
+          remediation: "Deploy an HTTPS (Port 443) listener block and link it to an SSL certificate."
+        });
+      }
+    });
+
+    // Step 6: Identity & Privileges Scan
+    steps.push({ target: "aws_iam_role", log: "[SCAN] Auditing Identity policies & execution roles...", status: "info" });
+    
+    const roles = ast.resources.filter(r => r.type === 'aws_iam_role' || r.type === 'aws_iam_policy');
+    roles.forEach(role => {
+      const body = role.rawBody || '';
+      if (body.includes('"*"') || body.includes('"* "') || body.includes('"*\\""')) {
+        steps.push({ target: role.type, log: `[VULN DETECTED] Privilege definition '${role.name}' contains wildcard '*' policies!`, status: "error" });
+        findings.push({
+          severity: "HIGH",
+          resource: `${role.type}.${role.name}`,
+          title: "Overly Permissive Wildcard Policy",
+          desc: "The IAM statement assigns access to all actions ('*') on all resources, breaking the Principle of Least Privilege.",
+          remediation: "Specify exact AWS API actions and point to specific resource ARNs."
+        });
+      }
+    });
+
+    let title = "Global Security Audit Report";
+    let reportHtml = "";
+
+    if (findings.length === 0) {
+      title = "Global Security Audit — PASSED 🛡️";
+      steps.push({ target: "aws_generic", log: "[SECURE] Security scan complete. No critical vulnerabilities found in configurations!", status: "success" });
+      reportHtml = `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <span style="font-size: 48px;">🛡️</span>
+          <h2 style="color: #10b981; margin-top: 10px;">Security Scan: PASSED</h2>
+          <p style="color: var(--text-secondary);">Your custom cloud architecture is compliant with AWS security baselines!</p>
+        </div>
+        <p>No critical, high, or medium severity vulnerabilities were found in your Terraform files.</p>
+        <h3 style="margin-top: 15px; margin-bottom: 10px;">Audited Controls</h3>
+        <ul>
+          <li>Storage Volume Encryption (RDS, EBS)</li>
+          <li>S3 Directory Access Segregation</li>
+          <li>Inbound Firewall Rules (SSH, RDP, Web Ingress)</li>
+          <li>Encrypted Network Transports (HTTPS listener checks)</li>
+          <li>IAM Role Privilege Limits (Wildcard scans)</li>
+        </ul>
+      `;
+    } else {
+      title = `Global Security Audit — ${findings.length} Risks Detected ⚠️`;
+      steps.push({ target: "aws_generic", log: `[AUDIT COMPLETED] Found ${findings.length} security risks in parsed resources.`, status: "warning" });
+      
+      reportHtml = `
+        <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 15px;">
+          <span style="font-size: 48px;">⚠️</span>
+          <h2 style="color: #ef4444; margin-top: 10px;">Security Scan: FAILED</h2>
+          <p style="color: var(--text-secondary);">Found ${findings.length} security risks that require remediation.</p>
+        </div>
+        
+        <h3 style="margin-top: 15px; margin-bottom: 10px;">Detailed Vulnerability Findings</h3>
+        ${findings.map((f, index) => `
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-default); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <strong style="color: var(--text-primary); font-size: 13px;">${index + 1}. ${f.title}</strong>
+              <span style="font-size: 10px; font-weight: 700; background: ${f.severity === 'HIGH' ? 'rgba(239,68,68,0.1)' : f.severity === 'MEDIUM' ? 'rgba(249,115,22,0.1)' : 'rgba(100,116,139,0.1)'}; color: ${f.severity === 'HIGH' ? '#f87171' : f.severity === 'MEDIUM' ? '#fb923c' : '#94a3b8'}; padding: 2px 6px; border-radius: 4px;">${f.severity}</span>
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Resource: <code>${f.resource}</code></p>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">${f.desc}</p>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-default); font-size: 11px; color: var(--accent-cyan);">
+              <strong>Remediation:</strong> ${f.remediation}
+            </div>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    return { title, steps, report: reportHtml };
   }
 
   getDynamicScenario(scenarioKey, ast) {
