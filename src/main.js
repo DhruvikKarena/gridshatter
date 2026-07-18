@@ -44,6 +44,31 @@ class App {
   }
 
   init() {
+    // 0. Landing Page Transition
+    const btnStart = document.getElementById('btn-start-journey');
+    const landingPage = document.getElementById('landing-page');
+    const appEl = document.getElementById('app');
+    const logoEl = document.getElementById('logo');
+
+    if (btnStart && landingPage && appEl) {
+      btnStart.addEventListener('click', () => {
+        landingPage.classList.add('fade-out');
+        setTimeout(() => {
+          landingPage.classList.add('hidden');
+          appEl.classList.remove('hidden');
+        }, 500);
+      });
+    }
+
+    if (logoEl && landingPage && appEl) {
+      logoEl.style.cursor = 'pointer';
+      logoEl.addEventListener('click', () => {
+        appEl.classList.add('hidden');
+        landingPage.classList.remove('hidden');
+        landingPage.classList.remove('fade-out');
+      });
+    }
+
     // 1. Initialize UI Container Elements
     const terminalEl = document.getElementById('terminal-section');
     const uploadEl = document.getElementById('upload-section');

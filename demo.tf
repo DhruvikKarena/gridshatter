@@ -1,4 +1,4 @@
-# Demo Terraform Configuration File for Cloud Architecture Simulator
+# Demo Terraform Configuration File for GridShatter
 
 provider "aws" {
   region = "us-east-1"

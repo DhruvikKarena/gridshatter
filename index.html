@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cloud Architecture Simulator — Visualize CircleCI & Terraform Configs</title>
-  <meta name="description" content="Upload CircleCI or Terraform configuration files and instantly generate interactive cloud architecture diagrams with animated visualization." />
+  <title>GridShatter — Cloud Architecture & Security Threat Simulator</title>
+  <meta name="description" content="GridShatter: Upload CircleCI or Terraform configuration files, generate interactive cloud architecture diagrams, and run static security threat analysis." />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,9 +13,97 @@
   <link rel="stylesheet" href="/src/styles/upload.css" />
   <link rel="stylesheet" href="/src/styles/diagram.css" />
   <link rel="stylesheet" href="/src/styles/terminal.css" />
+  <link rel="stylesheet" href="/src/styles/landing.css" />
 </head>
 <body>
-  <div id="app">
+  <!-- Landing Page -->
+  <div id="landing-page">
+    <div class="landing-content">
+      <header class="landing-header">
+        <div class="logo">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="url(#landingLogoGrad)"/>
+            <path d="M8 20L16 12L24 20" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 24L16 20L20 24" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+            <defs>
+              <linearGradient id="landingLogoGrad" x1="0" y1="0" x2="32" y2="32">
+                <stop stop-color="#06b6d4"/>
+                <stop offset="1" stop-color="#8b5cf6"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="logo-text">GridShatter</span>
+        </div>
+        <span class="badge">Threat Lab</span>
+      </header>
+
+      <section class="hero-section">
+        <div class="glowing-orb"></div>
+        <h1 class="hero-title">Shatter the Grid.<br><span class="highlight-text">Secure the Cloud.</span></h1>
+        <p class="hero-subtitle">An interactive cloud architecture visualizer and dynamic security threat simulation sandbox. Parse configurations, witness real-time cyber exploits, and patch vulnerability leaks.</p>
+        <button id="btn-start-journey" class="btn-primary-large">
+          <span>Start Journey</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </section>
+
+      <section class="features-section">
+        <h2 class="section-title">Core Operations</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🔍</div>
+            <h3>Interactive Visualization</h3>
+            <p>Upload raw Terraform HCL or CircleCI configs. Instantly compute physical layouts and animate the resource build order step-by-step.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>Threat Attack Simulation</h3>
+            <p>Initiate active breach drills. Watch targeted SVG nodes flash red as simulated attackers probe public buckets, open SSH ports, and hijack roles.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3>Static Security Auditing</h3>
+            <p>Scan your custom HCL workspace against industry baselines. Identify unencrypted disks, public permissions, and policy leaks with detailed reports.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎮</div>
+            <h3>Practice Arcade</h3>
+            <p>Conquer 14 progressive cloud challenges. Write HCL configs, clear validation objectives, and test secure setups against the scanner.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="workflow-section">
+        <h2 class="section-title">The Three-Step Loop</h2>
+        <div class="workflow-steps">
+          <div class="step-card">
+            <div class="step-num">01</div>
+            <h4>Import HCL</h4>
+            <p>Drop your configuration code in the editor workspace.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">02</div>
+            <h4>Trigger Breaches</h4>
+            <p>Launch simulation attacks and trace console exploit steps.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">03</div>
+            <h4>Remediate & Pass</h4>
+            <p>Write secure code blocks to patch vulns and verify compliance.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="landing-footer">
+        <p>&copy; 2026 GridShatter. Engineered for Advanced Cloud Architecture & DevSecOps Simulation.</p>
+      </footer>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
     <!-- Header -->
     <header id="app-header">
       <div class="header-left">
@@ -31,9 +119,9 @@
               </linearGradient>
             </defs>
           </svg>
-          <h1>Cloud Architect</h1>
+          <h1>GridShatter</h1>
         </div>
-        <span class="badge">Simulator</span>
+        <span class="badge">Threat Lab</span>
       </div>
       <div class="header-right">
         <div class="sample-selector" id="sample-selector"></div>
