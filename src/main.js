@@ -21,6 +21,33 @@ import { Toolbar } from './components/toolbar.js';
 import { SampleSelector } from './components/sample-files.js';
 import { ChallengesGame } from './components/challenges-game.js';
 
+// Google Analytics 4 Dynamic Integration via Environment Variable
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
+
+if (GA_MEASUREMENT_ID) {
+  // Load gtag script
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+  document.head.appendChild(script);
+
+  // Initialize dataLayer
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () {
+    window.dataLayer.push(arguments);
+  };
+  window.gtag('js', new Date());
+  window.gtag('config', GA_MEASUREMENT_ID);
+}
+
+function trackEvent(eventName, eventParams = {}) {
+  if (GA_MEASUREMENT_ID && typeof window.gtag === 'function') {
+    window.gtag('event', eventName, eventParams);
+  } else {
+    console.debug(`[Analytics Mock] Event: ${eventName}`, eventParams);
+  }
+}
+
 class App {
   constructor() {
     this.diagramEngine = null;
@@ -52,6 +79,7 @@ class App {
 
     if (btnStart && landingPage && appEl) {
       btnStart.addEventListener('click', () => {
+        trackEvent('start_journey');
         landingPage.classList.add('fade-out');
         setTimeout(() => {
           landingPage.classList.add('hidden');
@@ -63,6 +91,7 @@ class App {
     if (logoEl && landingPage && appEl) {
       logoEl.style.cursor = 'pointer';
       logoEl.addEventListener('click', () => {
+        trackEvent('view_landing');
         appEl.classList.add('hidden');
         landingPage.classList.remove('hidden');
         landingPage.classList.remove('fade-out');
@@ -132,6 +161,7 @@ class App {
     const gameContent = document.getElementById('game-tab-content');
 
     tabParserBtn.addEventListener('click', () => {
+      trackEvent('switch_tab', { tab_name: 'file_parser' });
       tabParserBtn.classList.add('active');
       tabGameBtn.classList.remove('active');
       parserContent.classList.remove('hidden');
@@ -144,6 +174,7 @@ class App {
     });
 
     tabGameBtn.addEventListener('click', () => {
+      trackEvent('switch_tab', { tab_name: 'practice_arcade' });
       tabGameBtn.classList.add('active');
       tabParserBtn.classList.remove('active');
       gameContent.classList.remove('hidden');
@@ -191,11 +222,12 @@ class App {
     }
 
     this.currentRawCode = content;
-    this.terminal.clear();
-    this.terminal.log('info', `Uploaded file: ${filename}`);
-
-    // 1. Detect file type
-    const fileType = detectFileType(filename, content);
+      this.terminal.clear();
+      this.terminal.log('info', `Uploaded file: ${filename}`);
+  
+      // 1. Detect file type
+      const fileType = detectFileType(filename, content);
+      trackEvent('upload_config', { file_name: filename, file_format: fileType });
     if (fileType === 'unknown') {
       this.terminal.log('error', '❌ Could not auto-detect configuration format.');
       this.errorPanel.setErrors([{
@@ -286,6 +318,7 @@ class App {
   }
 
   handleSampleSelected(sample) {
+    trackEvent('select_sample', { sample_name: sample.filename, file_format: sample.type });
     this.uploadZone.setFileState(sample.filename, sample.content.length, sample.type === 'hcl' ? 'terraform' : 'circleci');
     this.handleFileUploaded(sample.content, sample.filename);
   }
@@ -347,6 +380,7 @@ class App {
 
   handleChallengeSuccess(challenge, code) {
     this.handleChallengeCodeChange(code, true);
+    trackEvent('complete_challenge', { challenge_id: challenge.id, challenge_title: challenge.title });
     
     // Log victory messages in terminal
     this.terminal.log('success', `🎉 CHALLENGE CLEARED: ${challenge.title}!`);
@@ -373,6 +407,7 @@ class App {
     }
 
     const scenarioTitle = scenario.title || "Threat Simulation";
+    trackEvent('run_threat_simulation', { scenario_title: scenarioTitle });
     this.terminal.clear();
     this.terminal.log('step', `⚡ Starting Attacker Threat Simulation [Scenario: ${scenarioTitle}]...`);
 
